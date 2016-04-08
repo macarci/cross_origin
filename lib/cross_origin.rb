@@ -1,18 +1,26 @@
 require 'cross_origin/version'
 require 'cross_origin/collection'
 require 'cross_origin/document'
+require 'cross_origin/criteria'
 
 module CrossOrigin
 
   class << self
 
+    def to_name(origin)
+      if origin.is_a?(Symbol)
+        origin
+      else
+        origin.to_s.to_sym
+      end
+    end
+
     def [](origin)
-      origin = origin.to_s.to_sym unless origin.is_a?(Symbol)
-      origin_options[origin]
+      origin_options[to_name(origin)]
     end
 
     def config(origin, options = {})
-      origin = origin.to_s.to_sym unless origin.is_a?(Symbol)
+      origin = to_name(origin)
       fail "Not allowed for origin name: #{origin}" if origin == :default
       origin_options[origin] || (origin_options[origin] = Config.new(origin, options))
     end
