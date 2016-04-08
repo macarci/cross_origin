@@ -42,14 +42,23 @@ module CrossOrigin
         CrossOrigin.configurations.each do |config|
           if skip || limit
             opts = opts.dup
-            count += previous_view.count(super: true, skip: 0)
+            current_count = previous_view.count(super: true)
             if skip
-              opts[:skip] = skip = (count < skip ? skip - count : 0)
+              opts[:skip] = skip =
+                if current_count < skip
+                  skip - current_count
+                else
+                  count += current_count - skip
+                  0
+                end
             end
             if limit
-              current_skip = skip || 0
-              skipped_count = (current_skip > count ? 0 : count - current_skip)
-              opts[:limit] = limit = (limit > skipped_count ? limit - skipped_count : 0)
+              opts[:limit] = limit =
+                if count > limit
+                  0
+                else
+                  limit - count
+                end
             end
           end
           views << (previous_view = config.collection_for(model).find(selector, opts).modifiers(modifiers))
