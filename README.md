@@ -26,7 +26,7 @@ Configurate your origins
 CrossOrigin.config :test
 ```
 
-and include the module `CrossOrigin::Document` in your Mongoid class
+and include the module `CrossOrigin::Document` in your Mongoid class. Then use the `cross` method on records or criterias to send records to an origin collection.
 
 
 ## Development
