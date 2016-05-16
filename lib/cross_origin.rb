@@ -29,6 +29,10 @@ module CrossOrigin
       origin_options.values
     end
 
+    def configurations_for(model)
+      model.origins.collect { |origin| origin_options[origin] }.reject(&:nil?)
+    end
+
     def names
       origin_options.keys
     end
@@ -52,7 +56,7 @@ module CrossOrigin
     end
 
     def collection_name_for(model)
-      "#{name}_#{model.mongoid_root_class.storage_options_defaults[:collection]}"
+      "#{name}_#{model.mongoid_root_class.storage_options_defaults[:collection]}".to_sym
     end
 
     def collection_for(model)

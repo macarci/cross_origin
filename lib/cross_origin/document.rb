@@ -3,7 +3,7 @@ module CrossOrigin
     extend ActiveSupport::Concern
 
     included do
-      field :origin, type: Symbol, default: :default
+      field :origin, type: Symbol, default: -> { self.class.default_origin }
 
       attr_readonly :origin
 
@@ -11,7 +11,7 @@ module CrossOrigin
     end
 
     def origin_enum
-      [:default] + CrossOrigin.names.to_a
+      [:default] + self.class.origins
     end
 
     def collection_name
@@ -51,6 +51,50 @@ module CrossOrigin
             root = root.superclass while root.superclass.include?(Mongoid::Document)
             root
           end
+      end
+
+      def origins(*args)
+        if args.length == 0
+          if @origins
+            @origins.collect do |origin|
+              if origin.respond_to?(:call)
+                origin.call
+              else
+                origin
+              end
+            end.flatten.uniq.reject(&:nil?).collect do |origin|
+              if origin.is_a?(Symbol)
+                origin
+              else
+                origin.to_s.to_sym
+              end
+            end.uniq
+          else
+            superclass.include?(CrossOrigin::Document) ? superclass.origins : CrossOrigin.names
+          end
+        else
+          @origins = args.collect do |arg|
+            if arg.respond_to?(:call)
+              arg
+            else
+              arg.to_s.to_sym
+            end
+          end
+        end
+      end
+
+      def default_origin(*args)
+        if args.length == 0
+          if (@default_origin ||= :default).respond_to?(:call)
+            @default_origin.call
+          else
+            @default_origin
+          end
+        else
+          unless (@default_origin = args[0] || :default).respond_to?(:call)
+            @default_origin = default_origin.to_s.to_sym
+          end
+        end
       end
     end
   end
