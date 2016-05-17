@@ -72,8 +72,7 @@ module CrossOrigin
 
       def each(&block)
         if block
-          super(&block)
-          cross_views.each { |view| view.each(&block) }
+          invoke_cross(:each, &block)
         end
       end
 
@@ -82,7 +81,7 @@ module CrossOrigin
       # from Iterable
 
       def close_query
-        invoke_cross(:close_query, super)
+        invoke_unlimited_cross(:close_query)
       end
 
       # from Readable
@@ -92,7 +91,7 @@ module CrossOrigin
       end
 
       def distinct(field_name, options={})
-        invoke_cross(:distinct, super, field_name, options)
+        invoke_cross(:distinct, field_name, options)
       end
 
       # from Retryable (none)
@@ -102,42 +101,53 @@ module CrossOrigin
       # from Writable
 
       def find_one_and_delete
-        invoke_cross(:find_one_and_delete, super)
+        invoke_cross(:find_one_and_delete)
       end
 
       def find_one_and_replace(replacement, opts = {})
-        invoke_cross(:find_one_and_replace, super, replacement, opts)
+        invoke_cross(:find_one_and_replace, replacement, opts)
       end
 
       def find_one_and_update(document, opts = {})
-        invoke_cross(:find_one_and_update, super, document, opts)
+        invoke_cross(:find_one_and_update, document, opts)
       end
 
       def delete_many
-        invoke_cross(:delete_many, super)
+        invoke_cross(:delete_many)
       end
 
       def delete_one
-        invoke_cross(:delete_one, super)
+        invoke_cross(:delete_one)
       end
 
       def replace_one(replacement, opts = {})
-        invoke_cross(:replace_one, super, replacement, opts)
+        invoke_cross(:replace_one, replacement, opts)
       end
 
       def update_many(spec, opts = {})
-        invoke_cross(:update_many, super, spec, opts)
+        invoke_cross(:update_many, spec, opts)
       end
 
       def update_one(spec, opts = {})
-        invoke_cross(:update_one, super, spec, opts)
+        invoke_cross(:update_one, spec, opts)
       end
 
       private
 
-      def invoke_cross(method, super_response, *args)
-        response = [super_response]
-        cross_views.each { |view| response << view.send(method, *args) }
+      def invoke_unlimited_cross(method, *args, &block)
+        response = [method(method).super_method.call(*args, &block)]
+        cross_views.each { |view| response << view.send(method, *args, &block) }
+        response
+      end
+
+      def invoke_cross(method, *args, &block)
+        response =
+          if limit == 0
+            []
+          else
+            [method(method).super_method.call(*args, &block)]
+          end
+        cross_views.each { |view| response << view.send(method, *args, &block) unless view.limit == 0 }
         response
       end
     end
