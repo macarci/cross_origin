@@ -17,8 +17,8 @@ module CrossOrigin
 
       attr_reader :model
 
-      def cross_views
-        views = []
+      def cross_view_map
+        views = {}
         skip, limit = self.skip, self.limit
         opts = options
         previous_view = self
@@ -45,9 +45,13 @@ module CrossOrigin
                 end
             end
           end
-          views << (previous_view = config.collection_for(model).find(selector, opts).modifiers(modifiers))
+          views[config.name] = (previous_view = config.collection_for(model).find(selector, opts).modifiers(modifiers))
         end
         views
+      end
+
+      def cross_views
+        cross_view_map.values
       end
 
       # from class View
