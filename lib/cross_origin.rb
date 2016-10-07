@@ -19,7 +19,7 @@ module CrossOrigin
       origin_options[to_name(origin)]
     end
 
-    def config(origin, options = {})
+    def config(origin, options = {}, &block)
       origin = to_name(origin)
       fail "Not allowed for origin name: #{origin}" if origin == :default
       origin_options[origin] || (origin_options[origin] = Config.new(origin, options))
@@ -52,11 +52,18 @@ module CrossOrigin
 
     def initialize(name, options)
       @name = name
-      @options = options
+      @options = options || {}
     end
 
     def collection_name_for(model)
-      "#{name}_#{model.mongoid_root_class.storage_options_defaults[:collection]}".to_sym
+      case (collection = options[:collection])
+      when NilClass
+        "#{name}_#{model.mongoid_root_class.storage_options_defaults[:collection]}"
+      when Proc
+        collection.call(model)
+      else
+        collection.to_s.collectionize
+      end.to_s.to_sym
     end
 
     def collection_for(model)
