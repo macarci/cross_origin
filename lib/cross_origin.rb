@@ -34,7 +34,7 @@ module CrossOrigin
     end
 
     def names
-      origin_options.keys
+      [:default] + origin_options.keys.to_a
     end
 
     private
