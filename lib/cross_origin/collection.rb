@@ -21,12 +21,19 @@ module CrossOrigin
         views = {}
         skip, limit = self.skip, self.limit
         opts = options
-        previous_view = self
+        previous_view = nil
         count = 0
-        CrossOrigin.configurations_for(model).each do |config|
+        model.origins.each do |origin|
+          if (config = CrossOrigin[origin])
+            current_collection = config.collection_for(model)
+          elsif origin == :default
+            current_collection = collection.default_collection
+          else
+            next
+          end
           if skip || limit
             opts = opts.dup
-            current_count = previous_view.count(super: true)
+            current_count = previous_view ? previous_view.count : 0
             if skip
               opts[:skip] = skip =
                 if current_count < skip
@@ -40,12 +47,12 @@ module CrossOrigin
               opts[:limit] = limit =
                 if count > limit
                   0
-                else
+                 else
                   limit - count
                 end
             end
           end
-          views[config.name] = (previous_view = config.collection_for(model).find(selector, opts).modifiers(modifiers))
+          views[origin] = (previous_view = current_collection.find(selector, opts).modifiers(modifiers))
         end
         views
       end
@@ -91,7 +98,7 @@ module CrossOrigin
       # from Readable
 
       def count(options = {})
-        super + (options[:super] ? 0 : cross_views.inject(0) { |count, view| count + view.count })
+        cross_views.inject(0) { |count, view| count + view.count }
       end
 
       def distinct(field_name, options={})
@@ -139,18 +146,13 @@ module CrossOrigin
       private
 
       def invoke_unlimited_cross(method, *args, &block)
-        response = [method(method).super_method.call(*args, &block)]
+        response = []
         cross_views.each { |view| response << view.send(method, *args, &block) }
         response
       end
 
       def invoke_cross(method, *args, &block)
-        response =
-          if limit == 0
-            []
-          else
-            [method(method).super_method.call(*args, &block)]
-          end
+        response = []
         cross_views.each { |view| response << view.send(method, *args, &block) unless view.limit == 0 }
         response
       end
