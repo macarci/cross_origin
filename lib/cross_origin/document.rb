@@ -53,6 +53,11 @@ module CrossOrigin
           end
       end
 
+      def origins_config
+        @origins ||
+          (superclass.include?(CrossOrigin::Document) ? superclass.origins_config : nil)
+      end
+
       def origins(*args)
         if args.length == 0
           if @origins
@@ -73,7 +78,7 @@ module CrossOrigin
             superclass.include?(CrossOrigin::Document) ? superclass.origins : CrossOrigin.names
           end
         else
-          @origins = args.collect do |arg|
+          @origins = args.flatten.collect do |arg|
             if arg.respond_to?(:call)
               arg
             else
