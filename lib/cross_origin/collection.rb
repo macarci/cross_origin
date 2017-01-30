@@ -153,7 +153,11 @@ module CrossOrigin
 
       def invoke_cross(method, *args, &block)
         response = []
-        cross_views.each { |view| response << view.send(method, *args, &block) unless view.limit == 0 }
+        cross_views.each do |view|
+          unless view.limit == 0
+            response << view.send(method, *args, &block)
+          end
+        end
         response
       end
     end

@@ -6,7 +6,7 @@ require 'cross_origin/version'
 Gem::Specification.new do |spec|
   spec.name          = 'cross_origin'
   spec.version       = CrossOrigin::VERSION
-  spec.authors       = ['macarci']
+  spec.authors       = ['Maikel Arcia']
   spec.email         = ['macarci@gmail.com']
 
   spec.summary       = %q{Allows Mongoid models to store and retrieve documents from multiples collections.}
@@ -20,4 +20,7 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency 'bundler', '~> 1.8'
   spec.add_development_dependency 'rake', '~> 10.0'
+  spec.add_development_dependency 'mongoid-rspec', '>= 3.0.0'
+
+  spec.add_runtime_dependency 'mongoid', '>= 5.0.1'
 end
