@@ -88,15 +88,15 @@ module CrossOrigin
         end
       end
 
-      def default_origin(*args)
-        if args.length == 0
+      def default_origin(*args, &block)
+        if args.length == 0 && block.nil?
           if (@default_origin ||= :default).respond_to?(:call)
             @default_origin.call
           else
             @default_origin
           end
         else
-          unless (@default_origin = args[0] || :default).respond_to?(:call)
+          unless (@default_origin = args[0] || block || :default).respond_to?(:call)
             @default_origin = default_origin.to_s.to_sym
           end
         end
