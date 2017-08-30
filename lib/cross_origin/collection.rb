@@ -21,7 +21,6 @@ module CrossOrigin
         views = {}
         skip, limit = self.skip, self.limit
         opts = options
-        previous_view = nil
         count = 0
         model.origins.each do |origin|
           if (config = CrossOrigin[origin])
@@ -31,28 +30,36 @@ module CrossOrigin
           else
             next
           end
+          current_count = current_collection.count
+          next_skip = next_limit = nil
           if skip || limit
             opts = opts.dup
-            current_count = previous_view ? previous_view.count : 0
             if skip
-              opts[:skip] = skip =
-                if current_count < skip
-                  skip - current_count
-                else
-                  count += current_count - skip
-                  0
-                end
+              if current_count < skip
+                next_skip = skip - current_count
+                skip = current_count
+                current_count = 0
+              else
+                next_skip = 0
+                current_count -= skip
+              end
+              opts[:skip] = skip
             end
             if limit
-              opts[:limit] = limit =
-                if count > limit
+              next_limit =
+                if current_count > limit
+                  current_count = limit
                   0
-                 else
-                  limit - count
+                else
+                  limit - current_count
                 end
+              opts[:limit] = limit
             end
           end
-          views[origin] = (previous_view = current_collection.find(selector, opts).modifiers(modifiers))
+          count += current_count
+          views[origin] = current_collection.find(selector, opts).modifiers(modifiers)
+          skip = next_skip
+          limit = next_limit
         end
         views
       end
