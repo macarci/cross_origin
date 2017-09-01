@@ -30,7 +30,7 @@ module CrossOrigin
           else
             next
           end
-          current_count = current_collection.count
+          current_count = current_collection.find(selector).count
           next_skip = next_limit = nil
           if skip || limit
             opts = opts.dup
