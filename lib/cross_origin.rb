@@ -30,7 +30,7 @@ module CrossOrigin
     end
 
     def configurations_for(model)
-      model.origins.collect { |origin| origin_options[origin] }.reject(&:nil?)
+      model.origins.collect { |origin| origin_options[origin] }.compact
     end
 
     def names
