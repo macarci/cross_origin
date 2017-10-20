@@ -3,19 +3,27 @@ module CrossOrigin
     extend ActiveSupport::Concern
 
     included do
-      field :origin, type: Symbol, default: -> { self.class.default_origin }
+      field :origin, type: Symbol, default: -> { class_with_options.default_origin }
 
       attr_readonly :origin
 
       validates_inclusion_of :origin, in: ->(doc) { doc.origin_enum }
     end
 
+    def class_with_options
+      if persistence_options
+        self.class.with(persistence_options)
+      else
+        self.class
+      end
+    end
+
     def origin_enum
-      [:default] + self.class.origins
+      [:default] + class_with_options.origins
     end
 
     def collection_name
-      origin == :default ? super : CrossOrigin[origin].collection_name_for(self.class)
+      origin == :default ? super : CrossOrigin[origin].collection_name_for(class_with_options)
     end
 
     def client_name

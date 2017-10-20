@@ -1,4 +1,5 @@
 require 'cross_origin/version'
+require 'cross_origin/options'
 require 'cross_origin/collection'
 require 'cross_origin/document'
 require 'cross_origin/criteria'

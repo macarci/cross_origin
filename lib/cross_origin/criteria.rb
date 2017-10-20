@@ -13,14 +13,23 @@ module CrossOrigin
       docs = []
       each do |record|
         unless record.origin == origin
+          if persistence_options
+            record = record.with(persistence_options) unless record.persistence_options
+          end
           origins[record.collection] << record.id
-          doc = record.attributes.dup
+          doc = record.send(:_reload)
           doc['origin'] = origin
           docs << doc
         end
       end
-      ((cross_origin && cross_origin.collection_for(klass)) || klass.collection).insert_many(docs) unless docs.empty?
-      origins.each {|collection, ids| collection.find(_id: {'$in' => ids}).delete_many }
+      klass_with_options =
+        if persistence_options
+          klass.with(persistence_options)
+        else
+          klass
+        end
+      ((cross_origin && cross_origin.collection_for(klass_with_options)) || klass_with_options.collection).insert_many(docs) unless docs.empty?
+      origins.each { |collection, ids| collection.find(_id: { '$in' => ids }).delete_many }
     end
   end
 end
