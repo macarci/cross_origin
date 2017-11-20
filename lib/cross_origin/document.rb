@@ -30,10 +30,13 @@ module CrossOrigin
       origin == :default ? super : CrossOrigin[origin].name
     end
 
+    def can_cross?(origin)
+      self.origin != origin && (CrossOrigin[origin] || origin == :default) && origin_enum.include?(origin)
+    end
+
     def cross(origin = :default)
       origin = CrossOrigin.to_name(origin)
-      cross_origin = CrossOrigin[origin]
-      return false if self.origin == origin || (cross_origin.nil? && origin != :default)
+      return false unless can_cross?(origin)
       query = collection.find(_id: attributes['_id'])
       doc = query.first
       query.delete_one

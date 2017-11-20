@@ -12,15 +12,14 @@ module CrossOrigin
       origins = Hash.new { |h, k| h[k] = [] }
       docs = []
       each do |record|
-        unless record.origin == origin
-          if persistence_options
-            record = record.with(persistence_options) unless record.persistence_options
-          end
-          origins[record.collection] << record.id
-          doc = record.send(:_reload)
-          doc['origin'] = origin
-          docs << doc
+        next unless record.can_cross?(origin)
+        if persistence_options
+          record = record.with(persistence_options) unless record.persistence_options
         end
+        origins[record.collection] << record.id
+        doc = record.send(:_reload)
+        doc['origin'] = origin
+        docs << doc
       end
       klass_with_options =
         if persistence_options
