@@ -47,6 +47,18 @@ module CrossOrigin
 
     module ClassMethods
 
+      def storage_options_defaults
+        {
+          collection: collectionizable_name.collectionize.to_sym,
+          client: :default,
+          database: -> { configured_database }
+        }
+      end
+
+      def collectionizable_name
+        name
+      end
+
       def queryable
         CrossOrigin::Criteria.new(super)
       end
