@@ -13,7 +13,7 @@ module CrossOrigin
       docs = []
       each do |record|
         next unless record.can_cross?(origin)
-        if persistence_options
+        if persistence_context
           record = record.with(persistence_options) unless record.persistence_options
         end
         origins[record.collection] << record.id
@@ -22,8 +22,8 @@ module CrossOrigin
         docs << doc
       end
       klass_with_options =
-        if persistence_options
-          klass.with(persistence_options)
+        if persistence_context
+          klass.with(persistence_context)
         else
           klass
         end
