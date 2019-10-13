@@ -11,11 +11,11 @@ module CrossOrigin
     end
 
     def class_with_options
-      if persistence_options
-        self.class.with(persistence_options)
-      else
+      # if persistence_context.options.blank?
+      #   self.class.with(persistence_context.options)
+      # else
         self.class
-      end
+      # end
     end
 
     def origin_enum

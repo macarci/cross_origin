@@ -1,12 +1,12 @@
 module CrossOrigin
   module Options
 
-    def persistence_options
+    def persistence_context
       @persistence_options || {}
     end
 
     def with(options)
-      @persistence_options = options
+      @persistence_context = options
     end
   end
 end
@@ -29,7 +29,8 @@ module Mongoid
       class Proxy
 
         def method_missing(name, *args, &block)
-          set_persistence_options(@target, @options)
+          binding.pry
+          set_persistence_context(@target, @options)
           ret = @target.send(name, *args, &block)
           #Patch to capture persistence options with cross_origin
           if ret.class <= Mongoid::Criteria || ret.is_a?(CrossOrigin::Options)

@@ -11,7 +11,7 @@ module CrossOrigin
     end
 
     def find(filter = nil, options = {})
-      View.new(self, filter || {}, options, model.with(persistence_options))
+      View.new(self, filter || {}, options, model.with(persistence_context))
     end
 
     class View < Mongo::Collection::View
@@ -23,6 +23,8 @@ module CrossOrigin
         skip, limit = self.skip, self.limit
         opts = options
         count = 0
+        # TODO !!!! invistigate why model could be nil
+        return views if model.nil?
         model.origins.each do |origin|
           if (config = CrossOrigin[origin])
             current_collection = config.collection_for(model)
