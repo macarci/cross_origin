@@ -11,8 +11,8 @@ module CrossOrigin
     end
 
     def class_with_options
-      # if persistence_context
-        # self.class.with(persistence_context)
+      # if persistence_context.options.blank?
+      #   self.class.with(persistence_context.options)
       # else
         self.class
       # end

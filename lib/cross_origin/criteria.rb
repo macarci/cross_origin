@@ -14,7 +14,7 @@ module CrossOrigin
       each do |record|
         next unless record.can_cross?(origin)
         if persistence_context
-          record = record.with(persistence_options) unless record.persistence_options
+          record = record.with(persistence_context) unless record.persistence_context
         end
         origins[record.collection] << record.id
         doc = record.send(:_reload)

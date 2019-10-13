@@ -11,7 +11,7 @@ module CrossOrigin
     end
 
     def find(filter = nil, options = {})
-      View.new(self, filter || {}, options, model.with(persistence_options))
+      View.new(self, filter || {}, options, model.with(persistence_context))
     end
 
     class View < Mongo::Collection::View
