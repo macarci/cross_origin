@@ -3,31 +3,29 @@ module CrossOrigin
     extend ActiveSupport::Concern
 
     included do
-      field :origin, type: Symbol, default: -> { class_with_options.default_origin }
+      field :origin, type: Symbol, default: -> { self.class.default_origin }
 
       attr_readonly :origin
 
       validates_inclusion_of :origin, in: ->(doc) { doc.origin_enum }
     end
 
-    def class_with_options
-      if persistence_options
-        self.class.with(persistence_options)
-      else
-        self.class
-      end
-    end
-
     def origin_enum
-      [:default] + class_with_options.origins
+      [:default] + self.class.origins
     end
 
-    def collection_name
-      origin == :default ? super : CrossOrigin[origin].collection_name_for(class_with_options)
-    end
-
-    def client_name
-      origin == :default ? super : CrossOrigin[origin].name
+    def persistence_context
+      Mongoid::PersistenceContext.get(self) ||
+        Mongoid::PersistenceContext.get(self.class) || (
+      if origin == :default
+        Mongoid::PersistenceContext.new(self.class)
+      else
+        Mongoid::PersistenceContext.new(
+          self,
+          collection: CrossOrigin[origin].collection_name_for(self.class),
+        )
+      end
+      )
     end
 
     def can_cross?(origin)

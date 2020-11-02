@@ -11,7 +11,9 @@ module CrossOrigin
     end
 
     def find(filter = nil, options = {})
-      View.new(self, filter || {}, options, model.with(persistence_options))
+      model.with(persistence_context) do |m|
+        View.new(self, filter || {}, options, m)
+      end
     end
 
     class View < Mongo::Collection::View
@@ -21,6 +23,7 @@ module CrossOrigin
       def cross_view_map
         views = {}
         skip, limit = self.skip, self.limit
+        limit = nil if limit && limit < 0
         opts = options
         count = 0
         model.origins.each do |origin|
@@ -109,7 +112,7 @@ module CrossOrigin
         cross_views.inject(0) { |count, view| count + view.count }
       end
 
-      def distinct(field_name, options={})
+      def distinct(field_name, options = {})
         invoke_cross(:distinct, field_name, options)
       end
 

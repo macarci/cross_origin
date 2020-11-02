@@ -1,12 +1,29 @@
 module CrossOrigin
   module Options
 
-    def persistence_options
-      @persistence_options || {}
+    def persistence_context
+      Mongoid::PersistenceContext.get(self) ||
+        Mongoid::PersistenceContext.get(self.class) ||
+        Mongoid::PersistenceContext.new(self.class)
     end
 
-    def with(options)
-      @persistence_options = options
+    def with(options_or_context, &block)
+      original_context = Mongoid::PersistenceContext.get(self)
+      original_cluster = persistence_context.cluster
+      set_persistence_context(options_or_context)
+      yield self
+    ensure
+      clear_persistence_context(original_cluster, original_context)
+    end
+
+    private
+
+    def set_persistence_context(options_or_context)
+      Mongoid::PersistenceContext.set(self, options_or_context)
+    end
+
+    def clear_persistence_context(original_cluster = nil, context = nil)
+      Mongoid::PersistenceContext.clear(self, original_cluster, context)
     end
   end
 end
@@ -16,39 +33,9 @@ require 'mongoid/clients/options'
 module Mongoid
   module Clients
 
-    #Patch
-    def class_with_options
-      self.class
-    end
-
+    # TODO This methods might not need to be overridden
     def collection_name
-      super || class_with_options.collection_name
-    end
-
-    module Options
-      class Proxy
-
-        def method_missing(name, *args, &block)
-          set_persistence_options(@target, @options)
-          ret = @target.send(name, *args, &block)
-          #Patch to capture persistence options with cross_origin
-          if ret.class <= Mongoid::Criteria || ret.is_a?(CrossOrigin::Options)
-            ret.with @options
-          end
-          #Patch to keep persistence options when invoking mongoid_root_class
-          if name.to_sym == :mongoid_root_class && !@options.empty?
-            if ret == @target
-              ret = self
-            else
-              opts = @options.reject { |k, _| k.to_sym == :collection }
-              ret = ret.with(opts) unless opts.empty?
-            end
-          end
-          ret
-        ensure
-          set_persistence_options(@target, nil)
-        end
-      end
+      super || self.class.collection_name
     end
   end
 end
