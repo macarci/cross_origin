@@ -16,6 +16,12 @@ module CrossOrigin
       end
     end
 
+    def distinct(field_name, filter = nil, options = {})
+      model.with(persistence_context) do |m|
+        View.new(self, filter || {}, options, m).distinct(field_name, options).flatten.uniq
+      end
+    end
+
     class View < Mongo::Collection::View
 
       attr_reader :model
