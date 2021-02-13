@@ -110,16 +110,17 @@ module CrossOrigin
 
       def close_query
         invoke_unlimited_cross(:close_query)
+        nil
       end
 
       # from Readable
 
       def count(options = {})
-        cross_views.inject(0) { |count, view| count + view.count }
+        cross_views.inject(0) { |count, view| count + view.count(options) }
       end
 
       def distinct(field_name, options = {})
-        invoke_cross(:distinct, field_name, options)
+        invoke_cross(:distinct, field_name, options).reduce([], &:+).uniq
       end
 
       # from Retryable (none)
@@ -128,36 +129,51 @@ module CrossOrigin
 
       # from Writable
 
-      def find_one_and_delete
-        invoke_cross(:find_one_and_delete)
+      def find_one_and_delete(opts = {})
+        invoke_one_cross(:find_one_and_delete, opts)
       end
 
       def find_one_and_replace(replacement, opts = {})
-        invoke_cross(:find_one_and_replace, replacement, opts)
+        invoke_one_cross(:find_one_and_replace, replacement, opts)
       end
 
       def find_one_and_update(document, opts = {})
-        invoke_cross(:find_one_and_update, document, opts)
+        invoke_one_cross(:find_one_and_update, document, opts)
       end
 
       def delete_many
-        invoke_cross(:delete_many)
+        Operation::Delete::Result.new(*invoke_cross(:delete_many))
       end
 
-      def delete_one
-        invoke_cross(:delete_one)
+      def delete_one(opts = {})
+        result = nil
+        cross_views.each do |view|
+          result = view.delete_one(opts)
+          break if result.deleted_count > 0
+        end
+        result
       end
 
       def replace_one(replacement, opts = {})
-        invoke_cross(:replace_one, replacement, opts)
+        result = nil
+        cross_views.each do |view|
+          result = view.replace_one(replacement, opts)
+          break if result.modified_count > 0
+        end
+        result
       end
 
       def update_many(spec, opts = {})
-        invoke_cross(:update_many, spec, opts)
+        Operation::Update::Result.new(*invoke_cross(:update_many, spec, opts))
       end
 
       def update_one(spec, opts = {})
-        invoke_cross(:update_one, spec, opts)
+        result = nil
+        cross_views.each do |view|
+          result = view.update_one(spec, opts)
+          break if result.modified_count > 0
+        end
+        result
       end
 
       private
@@ -176,6 +192,17 @@ module CrossOrigin
           end
         end
         response
+      end
+
+      def invoke_one_cross(method, *args, &block)
+        doc = nil
+        cross_views.each do |view|
+          unless view.limit == 0
+            doc = view.send(method, *args, &block)
+          end
+          break if doc
+        end
+        doc
       end
     end
   end
