@@ -119,6 +119,10 @@ module CrossOrigin
         cross_views.inject(0) { |count, view| count + view.count(options) }
       end
 
+      def count_documents(opts = {})
+        cross_views.inject(0) { |count, view| count + view.count_documents(opts) }
+      end
+
       def distinct(field_name, options = {})
         invoke_cross(:distinct, field_name, options).reduce([], &:+).uniq
       end

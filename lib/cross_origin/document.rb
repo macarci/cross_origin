@@ -3,7 +3,7 @@ module CrossOrigin
     extend ActiveSupport::Concern
 
     included do
-      field :origin, type: Symbol, default: -> { self.class.default_origin }
+      field :origin, type: Mongoid::StringifiedSymbol, default: -> { self.class.default_origin }
 
       attr_readonly :origin
 
